@@ -14,6 +14,7 @@ import com.biblioteca.entidad.Autor;
 @Stateless
 public class AutorSession {
 
+	private static final String Query = null;
 	@PersistenceContext
 	EntityManager em;
 	
@@ -23,6 +24,7 @@ public class AutorSession {
 		try {
 			String jpql = "SELECT  a FROM Autor a ORDER BY a.codigo";
 			Query q = em.createQuery(jpql);
+			@SuppressWarnings("unchecked")
 			List<Autor> autores =  q.getResultList();
 			retorno.put("success", true);
 			retorno.put("result", autores);
@@ -40,6 +42,7 @@ public class AutorSession {
 				String jpql = "SELECT  a FROM Autor a WHERE UPPER(a.nombre) LIKE :nombre ORDER BY a.codigo";
 				Query q = em.createQuery(jpql);
 				q.setParameter("nombre","%"+ nombre.toUpperCase() +"%");
+				@SuppressWarnings("unchecked")
 				List<Autor> autores =  q.getResultList();
 				retorno.put("success", true);
 				retorno.put("result", autores);
@@ -51,7 +54,7 @@ public class AutorSession {
 			return retorno;
 		}
 	
-	//Busca al autor por código en la BD
+	//Busca al autor por cï¿½digo en la BD
 	public Autor buscarPorCodigo(Integer codigo) {
 		Autor autor= em.find(Autor.class, codigo);
 		return autor;
@@ -67,24 +70,26 @@ public class AutorSession {
 	
 	//Edita un autor en la BD
 	public Autor editar(Autor autor) {
+		autor = em.find(Autor.class, autor.getCodigo());
 		autor = em.merge(autor);
 		return autor;
 	}
 	
 	//Incluye o edita un autor dependiendo de si existe o no
-	public Autor actualizar(Autor autor) {
-		Autor autorActualizado = null;
-		Autor autorBuscar = buscarPorCodigo(autor.getCodigo());
-		if (autorBuscar == null) {
-			autorActualizado = incluir(autor);
+	public Autor actualizar(Autor autorActualizado) {
+		Autor autor = buscarPorCodigo(autorActualizado.getCodigo());
+		if (autor == null) {
+			autorActualizado.setCodigo(null);
+			em.persist(autorActualizado);
+			em.refresh(autorActualizado);
 		}else {
-			autorActualizado = editar(autor);
+			autorActualizado =  em.merge(autorActualizado);
 		}
 		return autorActualizado;
 	}
 	
 	public void eliminar(Integer codigo) {
-		//falta validación si no existe el codigo a eliminar
+		//falta validaciï¿½n si no existe el codigo a eliminar
 		Autor autorBuscar = em.find(Autor.class, codigo);
 		em.remove(autorBuscar);
 	}
